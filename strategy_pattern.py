@@ -53,24 +53,27 @@ class ScreenDisplaying(IDisplayBehavior):
 
 
 # -----------------------------------------------
-class Duck:
-    behaviors = {
-        'quack': IQuackBehavior,
-        'fly': IFlyBehavior,
-        'display': IDisplayBehavior,
-    }
-
+class Prototype(abc.ABC):
     def __new__(cls, *args, **kwargs):
-        assert issubclass(cls.behaviors['quack'], Duck.behaviors['quack'])
-        assert issubclass(cls.behaviors['fly'], Duck.behaviors['fly'])
-        assert issubclass(cls.behaviors['display'], Duck.behaviors['display'])
+        parent = cls.mro()[1]
+        for behavior, interface in parent.behaviors.items():
+            assert issubclass(cls.behaviors[behavior], interface)
         return super().__new__(cls, *args, **kwargs)
 
     def __getattr__(self, attr):
         return self.behaviors.get(attr)().run
 
 
-class MountainDuck(Duck):
+# -----------------------------------------------
+class DuckPrototype(Prototype):
+    behaviors = {
+        'quack': IQuackBehavior,
+        'fly': IFlyBehavior,
+        'display': IDisplayBehavior,
+    }
+
+
+class MountainDuck(DuckPrototype):
     behaviors = {
         'quack': LoudQuacking,
         'fly': JetFlying,
@@ -78,7 +81,7 @@ class MountainDuck(Duck):
     }
 
 
-class CloudDuck(Duck):
+class CloudDuck(DuckPrototype):
     behaviors = {
         'quack': NoQuacking,
         'fly': JetFlying,
@@ -86,7 +89,7 @@ class CloudDuck(Duck):
     }
 
 
-class RubberDuck(Duck):
+class RubberDuck(DuckPrototype):
     behaviors = {
         'quack': NoQuacking,
         'fly': SimpleFlying,
